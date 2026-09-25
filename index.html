@@ -44,9 +44,9 @@ button{font:inherit;color:inherit;cursor:pointer;margin:0}
 @keyframes wand{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
 #panel{background:var(--card);border-radius:28px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 28px var(--shadow);min-height:0}
 #tabs{display:flex;justify-content:space-around;gap:4px;padding:10px 8px;background:var(--soft);border-bottom:3px solid var(--line)}
-.tab{width:64px;height:64px;border-radius:20px;border:none;background:transparent;display:grid;place-items:center;padding:0;transition:transform .15s}
+.tab{flex:1 1 0;max-width:64px;min-width:0;height:62px;border-radius:20px;border:none;background:transparent;display:grid;place-items:center;padding:0;transition:transform .15s}
 .tab.on{background:#fff;box-shadow:0 4px 12px rgba(255,92,138,.3);transform:scale(1.08)}
-.tab svg{width:46px;height:46px}
+.tab svg{width:42px;height:42px}
 #content{flex:1;overflow-y:auto;padding:12px 14px 22px;-webkit-overflow-scrolling:touch;touch-action:pan-y;min-height:0}
 .chips{display:flex;flex-wrap:wrap;gap:8px;padding:2px 2px 8px;margin-bottom:8px}
 .chip{flex:0 0 auto;width:62px;height:62px;border-radius:18px;border:3px solid var(--line);background:#fff;display:grid;place-items:center;padding:0}
@@ -77,6 +77,10 @@ button{font:inherit;color:inherit;cursor:pointer;margin:0}
 @keyframes drop{0%{transform:translateY(-60px);opacity:0}15%{opacity:.9}100%{transform:translateY(330px);opacity:0}}
 .twinkle{animation:twk 1.2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
 @keyframes twk{0%,100%{transform:scale(.6);opacity:.5}50%{transform:scale(1.1);opacity:1}}
+.wag{animation:wag .5s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:0% 100%}
+@keyframes wag{from{transform:rotate(-12deg)}to{transform:rotate(10deg)}}
+.petHop.hop{animation:hop .5s ease-out}
+@keyframes hop{40%{transform:translateY(-22px)}}
 </style>
 </head>
 <body>
@@ -84,11 +88,12 @@ button{font:inherit;color:inherit;cursor:pointer;margin:0}
 <div id="app">
   <div id="stage">
     <svg id="bg" viewBox="0 0 800 700" preserveAspectRatio="xMidYMax slice"></svg>
-    <svg id="doll" viewBox="-20 0 440 680" preserveAspectRatio="xMidYMid meet">
+    <svg id="doll" viewBox="-20 -8 440 688" preserveAspectRatio="xMidYMid meet">
       <g id="bobG"><g id="jumpG">
         <g id="L-back"></g><g id="L-body"></g><g id="L-clothes"></g><g id="L-hands"></g><g id="L-face"></g>
         <g id="dirt"></g><g id="L-hairF"></g><g id="frizz"></g><g id="L-hat"></g>
       </g></g>
+      <g id="L-pet"></g><g id="L-petfx"></g>
     </svg>
     <svg id="scene" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet" hidden></svg>
     <div id="fx"></div>
@@ -221,6 +226,16 @@ const CL = {
       F('M150 300 Q200 290 250 300 L244 398 L156 398 Z', c, p) +
       F('M156 386 L244 386 L244 402 L156 402 Z', sh(solid(c), -.15)) +
       F('M200 394 L176 380 L178 410 Z M200 394 L224 380 L222 410 Z', sh(solid(c), -.15)) },
+    { id: 'unicorn', c: '#ffd6ec', p: 'plain', box: '80 270 240 260', draw: (c, p) =>
+      both(F(cpath(160, 314, 20), c, p)) +
+      F('M154 394 L246 394 L300 510' + scal(300, 100, 510, 8, 8) + ' Z', '#d9c2ff') +
+      F('M156 390 L244 390 L292 500' + scal(292, 108, 500, 8, 10) + ' Z', '#b8dcff') +
+      F('M156 390 L244 390 L278 468' + scal(278, 122, 468, 7, 9) + ' Z', '#b5f0c8') +
+      F('M156 390 L244 390 L265 438' + scal(265, 135, 438, 6, 8) + ' Z', '#ffe29a') +
+      F('M150 300 Q200 290 250 300 L244 398 L156 398 Z', c, p) +
+      F('M156 386 L244 386 L244 402 L156 402 Z', '#d9c2ff') +
+      `<path d="${star(200, 394, 13, 6)}" fill="#f6c453" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>` +
+      [[140, 482], [258, 486], [200, 456], [168, 424], [232, 428]].map(([x, y]) => `<path d="${star(x, y, 6, 2.5, 4)}" fill="#fff"/>`).join('') },
     { id: 'pajamas', c: '#8fb8ff', p: 'stars', box: '90 270 220 360', draw: (c, p) =>
       F('M158 396 L242 396 L247 614 L206 614 L200 470 L194 614 L153 614 Z', c, p) +
       both(S('M158 310 Q132 372 125 430', c, p, 36)) +
@@ -287,6 +302,11 @@ const CL = {
       F('M150 640 Q150 618 170 620 Q190 624 199 634 L199 642 L150 642 Z', c, p, 'fill-opacity=".85"') +
       `<rect x="150" y="640" width="8" height="10" rx="2" fill="${sh(solid(c), -.25)}"/>` +
       `<path d="${star(176, 626, 7, 3, 4)}" fill="#fff"/>`) },
+    { id: 'unislip', c: '#ffffff', p: 'plain', box: '136 576 128 76', draw: (c, p) => both(
+      F('M146 642 Q144 612 173 610 Q202 612 202 642 Z', c, p) +
+      `<path d="M168 612 L174 584 L182 611 Z" fill="#f6c453" stroke="#d9a53a" stroke-width="2" stroke-linejoin="round"/>` +
+      `<path d="M150 628 Q144 610 160 610 Q156 620 164 624 Q154 630 150 628 Z" fill="#ff9ecb"/><path d="M152 636 Q144 624 156 618" stroke="#c8a2ff" stroke-width="5" fill="none" stroke-linecap="round"/>` +
+      `<path d="M176 626 Q181 630 186 626" stroke="#333" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M185 626 L189 622" stroke="#333" stroke-width="2"/><circle cx="192" cy="633" r="3.5" fill="#ffb3cd" opacity=".8"/>`) },
     { id: 'bunny', c: '#ffffff', p: 'plain', box: '136 580 128 72', draw: (c, p) => both(
       `<ellipse cx="164" cy="602" rx="6" ry="16" fill="${fill(c)}" stroke="${sh(solid(c), -.25)}" stroke-width="3"/><ellipse cx="184" cy="600" rx="6" ry="16" fill="${fill(c)}" stroke="${sh(solid(c), -.25)}" stroke-width="3"/>` +
       `<ellipse cx="164" cy="603" rx="2.5" ry="9" fill="#ffb3cd"/><ellipse cx="184" cy="601" rx="2.5" ry="9" fill="#ffb3cd"/>` +
@@ -320,6 +340,12 @@ const CL = {
     { id: 'catears', c: '#3d3d4e', p: 'plain', box: '90 26 220 130', draw: (c, p) =>
       `<path d="M104 150 Q110 64 200 58 Q290 64 296 150" stroke="${sh(solid(c), -.25)}" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M104 150 Q110 64 200 58 Q290 64 296 150" stroke="${solid(c)}" stroke-width="8" fill="none" stroke-linecap="round"/>` +
       both(F('M112 106 L118 34 L170 72 Z', c, p) + `<path d="M124 94 L127 52 L158 76 Z" fill="#ffb3cd"/>`) }
+    ,{ id: 'unihorn', c: '#ffffff', p: 'plain', box: '90 -4 220 160', draw: (c, p) =>
+      `<path d="M104 150 Q110 64 200 58 Q290 64 296 150" stroke="${sh(solid(c), -.25)}" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M104 150 Q110 64 200 58 Q290 64 296 150" stroke="${solid(c)}" stroke-width="8" fill="none" stroke-linecap="round"/>` +
+      both(F('M128 98 L122 58 L154 80 Z', c, p) + `<path d="M132 90 L129 68 L147 80 Z" fill="#ffb3cd"/>`) +
+      F('M184 66 L200 0 L216 66 Z', '#f6c453') +
+      `<path d="M188 52 L212 44 M192 36 L208 30 M195 20 L205 16" stroke="#d9a53a" stroke-width="3" stroke-linecap="round"/>` +
+      [[170, 66, '#ff9ecb'], [230, 66, '#c8a2ff'], [154, 76, '#b5f0c8'], [246, 76, '#ffe29a']].map(([x, y, col]) => [0, 1, 2, 3, 4].map(j => { const b = j / 5 * Math.PI * 2; return `<circle cx="${f1(x + Math.cos(b) * 6)}" cy="${f1(y + Math.sin(b) * 6)}" r="5.5" fill="${col}"/>`; }).join('') + `<circle cx="${x}" cy="${y}" r="3.5" fill="#fff"/>`).join('') }
   ],
   acc: [
     { id: 'necklace', c: '#ffffff', p: 'plain', box: '160 284 80 64', draw: c => {
@@ -342,6 +368,9 @@ const CL = {
     { id: 'glasses', c: '#ff5c8a', p: 'plain', box: '96 160 208 80', draw: c => ({ face:
       both(`<path d="M131 196 L104 188" stroke="${sh(solid(c), -.2)}" stroke-width="5" stroke-linecap="round"/><path d="${heart(160, 202, 26)}" fill="${fill(c)}" fill-opacity=".42" stroke="${sh(solid(c), -.2)}" stroke-width="5" stroke-linejoin="round"/><path d="M146 186 Q152 180 160 184" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>`) +
       `<path d="M184 194 Q200 186 216 194" stroke="${sh(solid(c), -.2)}" stroke-width="5" fill="none" stroke-linecap="round"/>` }) },
+    { id: 'tail', c: '#ff9ecb', p: 'plain', box: '200 400 170 240', draw: (c, p) => ({ back:
+      F('M226 420 Q318 424 322 510 Q324 580 360 622 Q296 616 284 548 Q276 486 220 452 Z', c, p) +
+      ['#ffe29a', '#b5f0c8', '#b8dcff', '#d9c2ff'].map((col, i) => `<path d="M${232 + i * 4} ${430 + i * 5} Q${308 - i * 6} ${436 + i * 4} ${310 - i * 6} ${512 + i * 4} Q${310 - i * 4} 574 ${344 - i * 8} ${614 - i * 2}" stroke="${col}" stroke-width="7" fill="none" stroke-linecap="round"/>`).join('') }) },
     { id: 'cape', c: '#e63946', p: 'plain', box: '80 280 240 360', draw: (c, p) => ({
       back: F('M152 300 L248 300 L300 612 Q200 634 100 612 Z', c, p),
       clothes: `<path d="M166 300 Q200 318 234 300" stroke="${sh(solid(c), -.2)}" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="200" cy="311" r="7" fill="#f6c453"/>` }) }
@@ -383,6 +412,43 @@ const HAIR = [
 ];
 const HAIR_BY = {}; HAIR.forEach(h => HAIR_BY[h.id] = h);
 
+/* ---------- pet ---------- */
+const FUR = ['#e0b07a', '#ffffff', '#3d3d4e', '#a0522d', '#f2a65a', '#c9c9d6', '#ffb3cd', '#c8a2ff'];
+const PET_KINDS = ['puppy', 'kitty', 'bunny', 'none'];
+const PET_ACC = ['none', 'collar', 'bow', 'bandana', 'crown'];
+function petDraw(p, wag = true) { // local coords: origin at the ground, centered
+  if (!p || p.kind === 'none') return '';
+  const k = p.kind, f = p.fur, lt = sh(f, .55), dk = sh(f, -.2), o = sh(f, -.35);
+  const E = (cx, cy, rx, ry, col, x = '') => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${col}" stroke="${o}" stroke-width="2.5" ${x}/>`;
+  const M = t => t + `<g transform="scale(-1 1)">${t}</g>`;
+  const W = wag ? ' class="wag"' : '';
+  let s = `<ellipse cx="0" cy="2" rx="54" ry="8" fill="rgba(60,20,80,.13)"/>`;
+  if (k === 'puppy') s += `<g${W}><path d="M30 -26 Q62 -36 58 -70" stroke="${o}" stroke-width="17" fill="none" stroke-linecap="round"/><path d="M30 -26 Q62 -36 58 -70" stroke="${f}" stroke-width="11" fill="none" stroke-linecap="round"/></g>`;
+  if (k === 'kitty') s += `<g${W}><path d="M30 -16 Q76 -24 64 -70 Q58 -92 72 -102" stroke="${o}" stroke-width="15" fill="none" stroke-linecap="round"/><path d="M30 -16 Q76 -24 64 -70 Q58 -92 72 -102" stroke="${f}" stroke-width="9" fill="none" stroke-linecap="round"/></g>`;
+  s += M(E(-30, -10, 17, 11, f));
+  s += E(0, -40, 40, 36, f) + `<ellipse cx="0" cy="-32" rx="24" ry="25" fill="${lt}"/>`;
+  s += M(E(-15, -7, 11, 9, lt) + `<path d="M-19 -3 L-19 -8 M-15 -2 L-15 -8 M-11 -3 L-11 -8" stroke="${o}" stroke-width="1.6" stroke-linecap="round"/>`);
+  if (k === 'bunny') s += `<circle cx="40" cy="-18" r="14" fill="#fff" stroke="#ddd" stroke-width="2.5"/>`;
+  if (k === 'kitty') s += M(`<path d="M-33 -104 L-28 -142 L-6 -124 Z" fill="${f}" stroke="${o}" stroke-width="2.5" stroke-linejoin="round"/><path d="M-28 -110 L-26 -132 L-12 -122 Z" fill="#ffb3cd"/>`);
+  if (k === 'bunny') s += M(E(-15, -150, 11, 34, f, 'transform="rotate(-8 -15 -150)"') + `<ellipse cx="-15" cy="-148" rx="5" ry="25" fill="#ffb3cd" transform="rotate(-8 -15 -150)"/>`);
+  s += E(0, -96, 38, 33, f);
+  if (k === 'puppy') s += M(`<path d="M-28 -122 Q-54 -116 -48 -84 Q-42 -70 -32 -86 Q-30 -104 -22 -118 Z" fill="${dk}" stroke="${o}" stroke-width="2.5" stroke-linejoin="round"/>`);
+  s += `<ellipse cx="0" cy="-83" rx="17" ry="12" fill="${lt}"/>`;
+  s += M(`<circle cx="-14" cy="-100" r="8" fill="#fff"/><circle cx="-13" cy="-100" r="6" fill="#2a1d2a"/><circle cx="-11" cy="-102" r="2.2" fill="#fff"/><circle cx="-24" cy="-86" r="5" fill="#ff8fab" opacity=".45"/>`);
+  s += k === 'puppy' ? `<ellipse cx="0" cy="-89" rx="6.5" ry="5" fill="#2a1d2a"/>` : `<path d="M-5 -91 L5 -91 L0 -85 Z" fill="#ff8fab"/>`;
+  s += `<path d="M-7 -80 Q-3 -76 0 -82 Q3 -76 7 -80" stroke="#2a1d2a" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  if (k === 'puppy') s += `<ellipse cx="2" cy="-75" rx="4" ry="5" fill="#ff8fab"/>`;
+  if (k === 'kitty') s += M(`<path d="M-18 -86 L-36 -90 M-18 -82 L-36 -80" stroke="${o}" stroke-width="1.6" stroke-linecap="round"/>`);
+  if (k === 'bunny') s += `<rect x="-5" y="-80" width="10" height="7" rx="2" fill="#fff" stroke="#ccc" stroke-width="1.5"/>`;
+  const c = p.accC;
+  if (p.acc === 'collar') s += `<path d="M-27 -68 Q0 -57 27 -68" stroke="${sh(solid(c), -.25)}" stroke-width="10" fill="none" stroke-linecap="round"/><path d="M-27 -68 Q0 -57 27 -68" stroke="${fill(c)}" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="0" cy="-57" r="6" fill="#f6c453" stroke="#c8952a" stroke-width="2"/>`;
+  if (p.acc === 'bandana') s += F('M-28 -67 Q0 -58 28 -67 L0 -36 Z', c, 'dots');
+  if (p.acc === 'bow') { const bx = k === 'bunny' ? 0 : 22, by = k === 'bunny' ? -126 : -124; s += F(`M${bx} ${by} L${bx - 16} ${by - 10} L${bx - 14} ${by + 10} Z M${bx} ${by} L${bx + 16} ${by - 10} L${bx + 14} ${by + 10} Z`, c, 'plain') + `<circle cx="${bx}" cy="${by}" r="4.5" fill="${sh(solid(c), -.15)}"/>`; }
+  if (p.acc === 'crown') s += `<path d="M-16 -124 L-18 -146 L-8 -134 L0 -150 L8 -134 L18 -146 L16 -124 Z" fill="#f6c453" stroke="#c8952a" stroke-width="2.5" stroke-linejoin="round"/><circle cx="0" cy="-131" r="4" fill="${solid(c)}"/>`;
+  return s;
+}
+const PET_AT = 'translate(64 652) scale(.95)'; // left of the doll's feet, clear of the wand and the unicorn tail
+
 /* ---------- stickers ---------- */
 const STK = {
   heart: (x, y) => `<path d="${heart(x, y, 9)}" fill="#ff5c8a" stroke="#fff" stroke-width="2"/>`,
@@ -399,7 +465,8 @@ const DEF = {
   wear: { dress: { id: 'party', c: '#ff9ecb', p: 'dots' }, top: null, bottom: null, shoes: { id: 'maryjane', c: '#e63946', p: 'plain' }, hat: { id: 'bow', c: '#ff5c8a', p: 'plain' } },
   acc: {},
   mk: { lips: null, blush: null, shadow: null, lashes: false, nails: null, stickers: [] },
-  bg: 0
+  bg: 0,
+  pet: { kind: 'puppy', fur: '#e0b07a', acc: 'collar', accC: '#ff5c8a' }
 };
 const clone = o => JSON.parse(JSON.stringify(o));
 let st = clone(DEF), gal = [], muted = false;
@@ -417,6 +484,12 @@ function clean(o) { // tolerate old or damaged saves
   if (o.acc) { s.acc = {}; for (const [k, v] of Object.entries(o.acc)) if (BY.acc[k]) s.acc[k] = { c: v.c, p: v.p || 'plain' }; }
   if (o.mk) { Object.assign(s.mk, o.mk); s.mk.stickers = Array.isArray(o.mk.stickers) ? o.mk.stickers.filter(x => STK[x.t]).slice(0, 4) : []; }
   if (o.bg >= 0 && o.bg < 5) s.bg = o.bg;
+  if (o.pet && typeof o.pet === 'object') {
+    if (PET_KINDS.includes(o.pet.kind)) s.pet.kind = o.pet.kind;
+    if (typeof o.pet.fur === 'string') s.pet.fur = o.pet.fur;
+    if (PET_ACC.includes(o.pet.acc)) s.pet.acc = o.pet.acc;
+    if (typeof o.pet.accC === 'string') s.pet.accC = o.pet.accC;
+  }
   return s;
 }
 function load() {
@@ -463,7 +536,7 @@ function handsL(s) {
     (n ? [[113, 461], [122, 465], [131, 461]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="4.5" ry="3.6" fill="${n}" stroke="${sh(n, -.25)}" stroke-width="1"/>`).join('') : ''));
 }
 function layers(s) {
-  const k = SKIN[s.skin], L = { back: '', body: '', clothes: '', hands: '', face: '', hairF: '', hat: '' };
+  const k = SKIN[s.skin], L = { back: '', body: '', clothes: '', hands: '', face: '', hairF: '', hat: '', pet: '' };
   const acc = Object.entries(s.acc).map(([id, v]) => BY.acc[id].draw(v.c, v.p, k));
   const h = HAIR_BY[s.hair.s];
   acc.forEach(o => { if (o.back) L.back += o.back; });
@@ -475,9 +548,10 @@ function layers(s) {
   L.face = faceL(s); acc.forEach(o => { if (o.face) L.face += o.face; });
   L.hairF = h.front(s.hair.c) + `<path d="M134 86 Q200 64 266 86" stroke="#fff" stroke-opacity=".3" stroke-width="8" fill="none" stroke-linecap="round"/>`;
   if (s.wear.hat) { const v = s.wear.hat; L.hat = BY.hat[v.id].draw(v.c, v.p, k); }
+  if (s.pet.kind !== 'none') L.pet = `<g transform="${PET_AT}"><g class="petHop">${petDraw(s.pet)}</g></g>`;
   return L;
 }
-const dollMarkup = s => { const L = layers(s); return L.back + L.body + L.clothes + L.hands + L.face + L.hairF + L.hat; };
+const dollMarkup = s => { const L = layers(s); return L.back + L.body + L.clothes + L.hands + L.face + L.hairF + L.hat + L.pet; };
 
 /* ---------- backgrounds ---------- */
 function dotsGrid(col, op) { let s = ''; for (let y = 30; y < 560; y += 60) for (let x = (y / 60 % 2) * 30 + 20; x < 800; x += 60) s += `<circle cx="${x}" cy="${y}" r="6" fill="${col}" opacity="${op}"/>`; return s; }
@@ -548,6 +622,7 @@ const ICON = {
   soundOff: I(`<path d="M8 18 L16 18 L26 9 L26 39 L16 30 L8 30 Z" fill="#c9b6d6"/><path d="M32 18 L42 30 M42 18 L32 30" stroke="#c9b6d6" stroke-width="4" stroke-linecap="round"/>`),
   wand: I(`<path d="M10 40 L28 20" stroke="#9d4edd" stroke-width="5" stroke-linecap="round"/><path d="${star(31, 16, 13, 6)}" fill="#ffd93d" stroke="#e0a800" stroke-width="2" stroke-linejoin="round"/><path d="${star(12, 12, 5, 2, 4)}" fill="#ff5c8a"/><path d="${star(42, 36, 5, 2, 4)}" fill="#4cc9f0"/>`),
   camera: I(`<rect x="4" y="14" width="40" height="28" rx="7" fill="#ff5c8a" stroke="#c9396a" stroke-width="2.5"/><rect x="16" y="8" width="16" height="8" rx="3" fill="#c9396a"/><circle cx="24" cy="28" r="9" fill="#fff" stroke="#c9396a" stroke-width="2.5"/><circle cx="24" cy="28" r="5" fill="#4cc9f0"/>`),
+  pet: I(`<ellipse cx="24" cy="33" rx="12" ry="10" fill="#ff9f43"/><circle cx="11" cy="21" r="5" fill="#ff9f43"/><circle cx="19" cy="13" r="5" fill="#ff9f43"/><circle cx="29" cy="13" r="5" fill="#ff9f43"/><circle cx="37" cy="21" r="5" fill="#ff9f43"/><path d="${heart(24, 32, 4)}" fill="#fff" opacity=".7"/>`),
   home: I(`<path d="M6 24 L24 8 L42 24" stroke="#ff5c8a" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 22 L11 42 L37 42 L37 22" fill="#ffd6e8" stroke="#ff5c8a" stroke-width="4" stroke-linejoin="round"/><rect x="20" y="30" width="8" height="12" rx="3" fill="#ff5c8a"/>`)
 };
 const SPARK_COL = ['#ffd93d', '#ff5c8a', '#4cc9f0', '#c8a2ff', '#7bd389', '#ffffff'];
@@ -580,15 +655,23 @@ const sfx = {
   sparkle: () => [1319, 1661, 1976, 2637].forEach((f, i) => tone(f, i * .055, .3, 'triangle', .055)),
   pop: () => tone(420 + R() * 260, 0, .09, 'sine', .14, 1500),
   scrub: kind => {
-    if (kind === 'bath' || kind === 'hands') tone(900 + R() * 600, 0, .06, 'sine', .035, 1700);
+    if (kind === 'bath' || kind === 'hands' || kind === 'petbath') tone(900 + R() * 600, 0, .06, 'sine', .035, 1700);
     else if (kind === 'teeth') noise(.09, .09, 2600, 4200, 1.4);
+    else if (kind === 'pettowel') noise(.16, .06, 700, 1400, .7);
     else noise(.14, .07, 1200, 2400, .8);
   },
   fanfare: () => { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .12, .35, 'triangle', .1)); [1047, 1319, 1568].forEach(f => tone(f, .5, .9, 'triangle', .06)); },
   magic: () => { [784, 880, 988, 1175, 1319, 1568, 1760, 2093].forEach((f, i) => tone(f, i * .045, .22, 'triangle', .06)); noise(.6, .05, 3000, 8000, .6); },
   shutter: () => { noise(.07, .35, 3000, 1500, .7); tone(1568, .12, .35, 'sine', .08); tone(2093, .2, .4, 'sine', .06); },
   giggle: () => [0, 1, 2, 3, 4].forEach(i => tone(880 + i * 50 - (i % 2) * 160, i * .085, .075, 'sine', .1, 1180 + i * 40)),
-  swoosh: () => noise(.4, .12, 500, 3200, .7)
+  swoosh: () => noise(.4, .12, 500, 3200, .7),
+  crunch: () => noise(.07, .22, 1800, 900, 1.2),
+  pet: () => {
+    const k = st.pet.kind;
+    if (k === 'puppy') { tone(430, 0, .12, 'sawtooth', .06, 220); tone(450, .18, .12, 'sawtooth', .06, 230); }
+    else if (k === 'kitty') { tone(650, 0, .2, 'triangle', .09, 950); tone(950, .2, .35, 'triangle', .07, 520); }
+    else if (k === 'bunny') { tone(280, 0, .22, 'sine', .12, 900); tone(500, .15, .15, 'sine', .08, 1200); }
+  }
 };
 let voice = null, lastSay = 0;
 function pickVoice() {
@@ -608,7 +691,7 @@ const praise = () => { if (R() < .5) say(pick(PRAISE)); };
 
 /* ---------- stage rendering ---------- */
 const doll = $('#doll'), scene = $('#scene'), stage = $('#stage'), fx = $('#fx');
-const VIEWS = { full: [-20, 0, 440, 680], hair: [10, 0, 380, 470], face: [66, 58, 268, 250], nails: [72, 396, 256, 104], me: [30, 20, 340, 400] };
+const VIEWS = { full: [-20, -8, 440, 688], hair: [10, 0, 380, 470], face: [66, 58, 268, 250], nails: [72, 396, 256, 104], me: [30, 20, 340, 400] };
 let vb = VIEWS.full.slice(), vbAnim = 0, bathBg = false;
 function setView(name) {
   const to = VIEWS[name], from = vb.slice(), t0 = performance.now();
@@ -641,7 +724,7 @@ function sparkAt(svg, x, y, n = 8, spread = 60) {
     d.innerHTML = sparkSVG(pick(SPARK_COL)); fx.appendChild(d); setTimeout(() => d.remove(), 950);
   }
 }
-const SPOT = { dress: [200, 460], top: [200, 350], bottom: [200, 450], shoes: [200, 630], hat: [200, 70], acc: [200, 360], hair: [200, 150], face: [200, 210], lips: [200, 252], blush: [200, 236], shadow: [200, 186], lashes: [200, 184], nails: [200, 455], stickers: [200, 230] };
+const SPOT = { dress: [200, 460], top: [200, 350], bottom: [200, 450], shoes: [200, 630], hat: [200, 70], acc: [200, 360], hair: [200, 150], face: [200, 210], lips: [200, 252], blush: [200, 236], shadow: [200, 186], lashes: [200, 184], nails: [200, 455], stickers: [200, 230], pet: [64, 580] };
 function applied(where, big) {
   renderDoll(); save(); jump(); sfx.sparkle();
   const [x, y] = SPOT[where] || [200, 300];
@@ -650,7 +733,7 @@ function applied(where, big) {
 }
 
 /* ---------- panel ---------- */
-const TABS = ['clothes', 'hair', 'makeup', 'clean', 'me', 'photos'];
+const TABS = ['clothes', 'hair', 'makeup', 'clean', 'pet', 'me', 'photos'];
 const CCATS = ['dress', 'top', 'bottom', 'shoes', 'hat', 'acc'];
 const MCATS = ['lips', 'blush', 'shadow', 'lashes', 'stickers', 'nails', 'wipe'];
 const tileSVG = (vbox, inner) => `<svg viewBox="${vbox}" preserveAspectRatio="xMidYMid meet">${inner}</svg>`;
@@ -715,6 +798,24 @@ const CLEAN_ART = {
 function pClean() {
   return `<div class="grid big">${Object.keys(CLEAN_ART).map(k => `<button class="tile ${act && act.kind === k ? 'on' : ''}" data-a="clean" data-v="${k}" aria-label="${k}">${CLEAN_ART[k]}</button>`).join('')}</div>`;
 }
+const PET_ART = {
+  petbath: CLEAN_ART.bath,
+  petbrush: I(`<path d="${blob(36, 58, 28, 18, .12, null, true)}" fill="#e0b07a" stroke="#b07a4c" stroke-width="3"/><circle cx="28" cy="54" r="3.5" fill="#2a1d2a"/><circle cx="44" cy="54" r="3.5" fill="#2a1d2a"/><ellipse cx="36" cy="64" rx="4" ry="3" fill="#2a1d2a"/><g transform="rotate(35 70 46)"><rect x="64" y="50" width="12" height="44" rx="6" fill="#9d4edd"/><ellipse cx="70" cy="34" rx="18" ry="20" fill="#c8a2ff" stroke="#6a2fb0" stroke-width="3"/>${[[-7, -7], [0, -9], [7, -7], [-9, 2], [0, 0], [9, 2], [-5, 10], [5, 10]].map(([x, y]) => `<circle cx="${70 + x}" cy="${34 + y}" r="2" fill="#6a2fb0"/>`).join('')}</g>`, '0 0 100 100'),
+  pettowel: I(`<rect x="14" y="22" width="72" height="56" rx="10" fill="#bde7ff" stroke="#6fb7ff" stroke-width="3"/><path d="M14 38 L86 38 M14 62 L86 62" stroke="#fff" stroke-width="6"/><path d="M22 78 L22 88 M32 78 L32 88 M42 78 L42 88 M52 78 L52 88 M62 78 L62 88 M72 78 L72 88" stroke="#6fb7ff" stroke-width="3" stroke-linecap="round"/><path d="M84 8 C88 14 88 18 84 18 C80 18 80 14 84 8Z" fill="#6fc3ff"/>`, '0 0 100 100'),
+  treat: I(`<g transform="rotate(-20 50 32)"><rect x="32" y="27" width="36" height="10" rx="5" fill="#fff6e0" stroke="#d9b98a" stroke-width="2.5"/>${[[32, 27], [32, 37], [68, 27], [68, 37]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="6" fill="#fff6e0" stroke="#d9b98a" stroke-width="2.5"/>`).join('')}</g><path d="M16 58 L84 58 L76 86 L24 86 Z" fill="#ff5c8a" stroke="#c9396a" stroke-width="3" stroke-linejoin="round"/><ellipse cx="50" cy="58" rx="34" ry="7" fill="#a0522d"/><path d="${heart(50, 72, 6)}" fill="#fff"/>`, '0 0 100 100')
+};
+function pPet() {
+  const p = st.pet;
+  let h = '<div class="grid">' + PET_KINDS.map(k => `<button class="tile ${p.kind === k ? 'on' : ''}" data-a="petk" data-v="${k}" aria-label="${k}">${k === 'none'
+      ? I(`<ellipse cx="24" cy="34" rx="20" ry="8" fill="#c8a2ff"/><ellipse cx="24" cy="31" rx="15" ry="5" fill="#e6d9ff"/>`)
+      : tileSVG(k === 'bunny' ? '-64 -192 132 204' : '-62 -156 142 168', petDraw({ ...p, kind: k }, false))}</button>`).join('') + '</div>';
+  if (p.kind === 'none') return h;
+  h += '<div class="gap"></div><div class="grid big">' + Object.keys(PET_ART).map(k => `<button class="tile ${act && act.kind === k ? 'on' : ''}" data-a="groom" data-v="${k}" aria-label="${k}">${PET_ART[k]}</button>`).join('') + '</div>';
+  h += colorRow(FUR, p.fur, 'fur');
+  h += '<div class="gap"></div><div class="grid">' + PET_ACC.map(a => `<button class="tile ${p.acc === a ? 'on' : ''}" data-a="petacc" data-v="${a}" aria-label="${a}">${tileSVG('-50 -160 100 114', petDraw({ ...p, acc: a }, false))}</button>`).join('') + '</div>';
+  if (p.acc !== 'none') h += colorRow(COLORS, p.accC, 'petaccc');
+  return h;
+}
 function pMe() {
   const face = (k, frk) => I(`<circle cx="24" cy="24" r="20" fill="${k}" stroke="${sh(k, -.22)}" stroke-width="2.5"/><circle cx="17" cy="22" r="3" fill="#3a2a35"/><circle cx="31" cy="22" r="3" fill="#3a2a35"/><path d="M17 31 Q24 37 31 31" stroke="#b0485a" stroke-width="2.5" fill="none" stroke-linecap="round"/>${frk ? [[12, 28], [15, 31], [18, 28], [30, 28], [33, 31], [36, 28]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.3" fill="${sh(k, -.4)}"/>`).join('') : ''}`);
   let h = '<div class="grid">' + SKIN.map((k, i) => `<button class="tile ${st.skin === i ? 'on' : ''}" data-a="skin" data-v="${i}" aria-label="skin tone">${face(k)}</button>`).join('') + '</div>';
@@ -725,7 +826,7 @@ function pMe() {
 function pPhotos() {
   let h = `<div class="grid">` + BGS.map((b, i) => `<button class="tile ${st.bg === i ? 'on' : ''}" data-a="bg" data-v="${i}" aria-label="background" style="padding:3px;overflow:hidden"><svg viewBox="0 0 800 700" preserveAspectRatio="xMidYMid slice" style="border-radius:16px">${b()}</svg></button>`).join('') + '</div>';
   h += `<div class="gap"></div><div class="grid"><button class="tile tall snap" data-a="snap" aria-label="take a picture">${ICON.camera}</button>` +
-    gal.map((g, i) => `<button class="tile tall" data-a="look" data-v="${i}" aria-label="saved look"><svg viewBox="-20 0 440 680" preserveAspectRatio="xMidYMid slice" style="border-radius:16px"><svg x="-20" y="0" width="440" height="680" viewBox="0 0 800 700" preserveAspectRatio="xMidYMax slice">${BGS[g.bg]()}</svg>${dollMarkup(g)}</svg></button>`).join('') + '</div>';
+    gal.map((g, i) => `<button class="tile tall" data-a="look" data-v="${i}" aria-label="saved look"><svg viewBox="-20 -8 440 688" preserveAspectRatio="xMidYMid slice" style="border-radius:16px"><svg x="-20" y="-8" width="440" height="688" viewBox="0 0 800 700" preserveAspectRatio="xMidYMax slice">${BGS[g.bg]()}</svg>${dollMarkup(g)}</svg></button>`).join('') + '</div>';
   return h;
 }
 function renderTabs() {
@@ -733,7 +834,7 @@ function renderTabs() {
 }
 function renderPanel(keepScroll = true) {
   const c = $('#content'), top = c.scrollTop;
-  c.innerHTML = ({ clothes: pClothes, hair: pHair, makeup: pMakeup, clean: pClean, me: pMe, photos: pPhotos })[ui.tab]();
+  c.innerHTML = ({ clothes: pClothes, hair: pHair, makeup: pMakeup, clean: pClean, pet: pPet, me: pMe, photos: pPhotos })[ui.tab]();
   if (keepScroll) c.scrollTop = top;
 }
 function renderFabs() {
@@ -791,8 +892,25 @@ function wipe() {
   say('All washed off!', true);
 }
 
+function hopPet() { const h = document.querySelector('#L-pet .petHop'); if (!h) return; h.classList.remove('hop'); h.getBoundingClientRect(); h.classList.add('hop'); }
+const PET_TALK = { puppy: ['Woof woof!', 'Good puppy!'], kitty: ['Meow!', 'Purrrr!'], bunny: ['Hop hop!', 'Good bunny!'] };
+let treating = false;
+function petTreat() {
+  if (st.pet.kind === 'none' || act || treating) return;
+  treating = true;
+  const g = $('#L-petfx');
+  g.innerHTML = `<ellipse cx="120" cy="662" rx="30" ry="6" fill="rgba(60,20,80,.12)"/><path d="M94 642 L146 642 L139 660 L101 660 Z" fill="#ff5c8a" stroke="#c9396a" stroke-width="3" stroke-linejoin="round"/><ellipse cx="120" cy="642" rx="26" ry="5.5" fill="#a0522d"/>` +
+    [[110, 639], [118, 637], [127, 639], [114, 642], [123, 642], [131, 641]].map(([x, y]) => `<circle class="kib" cx="${x}" cy="${y}" r="4" fill="#c98a55" stroke="#8b5a2b" stroke-width="1.5"/>`).join('') + `<path d="${heart(120, 652, 4.5)}" fill="#fff"/>`;
+  sfx.tap();
+  const kib = [...g.querySelectorAll('.kib')];
+  kib.forEach((k, i) => setTimeout(() => { k.remove(); sfx.crunch(); hopPet(); sparkAt(doll, 64, 560, 3, 40); }, 500 + i * 320));
+  setTimeout(() => { sfx.sparkle(); sfx.pet(); say('Yum yum! ' + PET_TALK[st.pet.kind][1], true); sparkAt(doll, 64, 540, 12, 90); }, 500 + kib.length * 320);
+  setTimeout(() => { g.innerHTML = ''; treating = false; }, 1400 + kib.length * 320);
+}
+
 /* ---------- hygiene activities ---------- */
 const TOOLS = {
+  towel: `<g transform="rotate(-10)"><rect x="-46" y="-30" width="92" height="60" rx="14" fill="#bde7ff" stroke="#6fb7ff" stroke-width="3"/><path d="M-46 -12 L46 -12 M-46 12 L46 12" stroke="#fff" stroke-width="6"/><path d="M-36 30 L-36 40 M-22 30 L-22 40 M-8 30 L-8 40 M6 30 L6 40 M20 30 L20 40 M34 30 L34 40" stroke="#6fb7ff" stroke-width="3" stroke-linecap="round"/></g>`,
   bath: `<g transform="rotate(-12)"><rect x="-40" y="-26" width="80" height="52" rx="16" fill="#ffd93d" stroke="#d9a400" stroke-width="3"/><circle cx="-20" cy="-8" r="5" fill="#f2b600"/><circle cx="6" cy="6" r="6" fill="#f2b600"/><circle cx="24" cy="-10" r="4" fill="#f2b600"/><circle cx="-8" cy="14" r="3.5" fill="#f2b600"/><circle cx="-30" cy="-32" r="9" fill="#fff" stroke="#9fd8ff" stroke-width="2"/><circle cx="32" cy="-32" r="6" fill="#fff" stroke="#9fd8ff" stroke-width="2"/></g>`,
   teeth: `<g transform="rotate(-20)"><rect x="18" y="-16" width="140" height="15" rx="7" fill="#4cc9f0" stroke="#2a93c0" stroke-width="3"/><rect x="-32" y="-16" width="62" height="15" rx="6" fill="#4cc9f0" stroke="#2a93c0" stroke-width="3"/><rect x="-28" y="-2" width="54" height="16" rx="3" fill="#fff" stroke="#b9d6f2" stroke-width="2.5"/><path d="M-20 0 L-20 13 M-10 0 L-10 13 M0 0 L0 13 M10 0 L10 13 M20 0 L20 13" stroke="#b9d6f2" stroke-width="2"/><path d="M-24 14 Q-12 24 0 14 Q12 24 24 14" stroke="#7fe0c8" stroke-width="5" fill="none" stroke-linecap="round"/></g>`,
   hands: `<g><rect x="-42" y="-26" width="84" height="52" rx="22" fill="#ff9ecb" stroke="#e0679d" stroke-width="3"/><ellipse cx="-12" cy="-10" rx="18" ry="6" fill="#fff" opacity=".55"/><circle cx="-34" cy="-30" r="10" fill="#fff" stroke="#9fd8ff" stroke-width="2"/><circle cx="30" cy="-34" r="7" fill="#fff" stroke="#9fd8ff" stroke-width="2"/><circle cx="44" cy="-14" r="5" fill="#fff" stroke="#9fd8ff" stroke-width="2"/></g>`,
@@ -845,6 +963,35 @@ function handsScene() {
   pts.forEach(([x, y, r], i) => { if (i % 2 === 0 || i === 3) spots.push({ x, y, r }); if (i % 2 === 1 || i === 0) spots.push({ x: 400 - x, y, r }); });
   return { svg, spots: spots.map(s => ({ ...s, html: germ(s.x, s.y, s.r, rnd, '#8fdc5a', '#4f9a2a') })) };
 }
+function petScene(kind) {
+  const p = st.pet, sc = p.kind === 'bunny' ? 1.8 : 2.4, X = v => 200 + v * sc, Y = v => 368 + v * sc, rnd = rng(kind.length * 13);
+  let bg = `<rect x="-600" y="-600" width="1600" height="1600" fill="${kind === 'petbrush' ? '#fde7f3' : '#d6f1ff'}"/>`;
+  if (kind === 'petbrush') bg += [[40, 60], [350, 80], [60, 300], [340, 280], [200, 30]].map(([x, y]) => `<path d="${heart(x, y, 12)}" fill="#fff" opacity=".8"/>`).join('');
+  else bg += [-200, -130, -60, 10, 80, 150, 220, 290, 360, 430, 500, 570].map(x => `<path d="M${x} -600 L${x} 1000" stroke="#fff" stroke-width="4"/>`).join('') +
+    [-190, -120, -50, 20, 90, 160, 230, 300, 370, 440, 510].map(y => `<path d="M-600 ${y} L1000 ${y}" stroke="#fff" stroke-width="4"/>`).join('');
+  if (kind === 'pettowel') bg += `<ellipse cx="200" cy="372" rx="170" ry="26" fill="#ffb3cd"/><ellipse cx="200" cy="370" rx="150" ry="18" fill="#ffd6e8"/>`;
+  let front = '';
+  if (kind === 'petbath') front = `<path d="M-600 330 L1000 330 L1000 1000 L-600 1000 Z" fill="#fff" stroke="#8fd3ff" stroke-width="6"/>` +
+    [30, 70, 110, 150, 250, 290, 330, 370].map((x, i) => `<circle cx="${x}" cy="${330 - (i % 2) * 6}" r="${16 + (i % 3) * 5}" fill="#fff" stroke="#9fd8ff" stroke-width="3"/>`).join('');
+  const svg = bg + `<g transform="translate(200 368) scale(${sc})">${petDraw(p)}</g>` + front;
+  const L = {
+    petbath: [[-20, -40, 9], [18, -26, 8], [-8, -104, 7], [22, -94, 6], [8, -56, 7], [-24, -70, 6]],
+    petbrush: [[-40, -44, 9], [40, -40, 9], [-36, -80, 8], [36, -82, 8], [-10, -126, 8], [16, -122, 8], [-42, -12, 8], [42, -14, 8]],
+    pettowel: [[-18, -112, 6], [16, -106, 6], [-26, -52, 6], [22, -36, 6], [0, -18, 6], [-34, -24, 6], [30, -62, 6], [-6, -66, 6]]
+  }[kind];
+  const stc = sh(p.fur, -.35);
+  const spots = L.map(([lx, ly, r]) => {
+    const x = f1(X(lx)), y = f1(Y(ly)), R = r * sc; let html;
+    if (kind === 'petbath') html = `<path d="${blob(x, y, R, 10, .3, rnd)}" fill="#8b5a2b" opacity=".9"/><circle cx="${f1(x + R * .8)}" cy="${f1(y - R)}" r="${f1(R * .25)}" fill="#8b5a2b"/>`;
+    else if (kind === 'petbrush') {
+      let d = `M${f1(x - R)} ${y}`;
+      for (let i = 0; i < 5; i++) d += ` c${f1(R * .35 + rnd() * R * .3)} ${f1(-R * .8 - rnd() * R * .4)} ${f1(R * .8 + rnd() * R * .3)} ${f1(R * .3 + rnd() * R * .3)} ${f1(R * .3 + rnd() * R * .2)} ${f1(-R * .1 + rnd() * R * .3)}`;
+      html = `<path d="${blob(x, y, R, 9, .4, rnd)}" fill="${p.fur}" stroke="${stc}" stroke-width="3"/><path d="${d}" stroke="${stc}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+    } else html = `<path d="M${x} ${f1(y - R * 1.5)} C${f1(x + R)} ${f1(y - R * .2)} ${f1(x + R)} ${f1(y + R)} ${x} ${f1(y + R)} C${f1(x - R)} ${f1(y + R)} ${f1(x - R)} ${f1(y - R * .2)} ${x} ${f1(y - R * 1.5)}Z" fill="#6fc3ff" stroke="#3a9be0" stroke-width="2.5"/><circle cx="${f1(x - R * .35)}" cy="${y}" r="${f1(R * .25)}" fill="#fff" opacity=".8"/>`;
+    return { x, y, r: Math.max(R, 14), html };
+  });
+  return { svg, spots };
+}
 function mudSpots() {
   const rnd = rng(3), pts = [[146, 228, 18], [256, 214, 16], [132, 382, 18], [272, 398, 17], [180, 540, 20], [224, 590, 18], [122, 452, 15], [214, 352, 16]];
   return pts.map(([x, y, r]) => ({ x, y, r, html: `<path d="${blob(x, y, r, 10, .3, rnd)}" fill="#8b5a2b" opacity=".9"/><circle cx="${x + r + 4}" cy="${y - r * .6}" r="4" fill="#8b5a2b" opacity=".85"/><circle cx="${x - r * .7}" cy="${y + r + 3}" r="3" fill="#8b5a2b" opacity=".85"/><circle cx="${x - 4}" cy="${y - 4}" r="${f1(r * .3)}" fill="#a57040"/>` }));
@@ -860,13 +1007,15 @@ function frizzSpots() {
     return { x, y, r: 22, html: `<path d="${blob(x, y, 14, 9, .4, rnd)}" fill="${fill(c)}" stroke="${stc}" stroke-width="2.5"/><path d="${d}" stroke="${stc}" stroke-width="3.5" fill="none" stroke-linecap="round" transform="rotate(${f1(rnd() * 80 - 40)} ${f1(x)} ${f1(y)})"/>` };
   });
 }
-const ACT_TALK = { bath: ['Uh oh, muddy! Rub rub rub!', 'Squeaky clean!'], teeth: ['Brush away the sugar bugs!', 'Shiny sparkly teeth!'], hands: ['Scrub scrub! Wash the germs away!', 'Clean hands! Yay!'], hairbrush: ['Brush out the tangles!', 'Pretty smooth hair!'] };
+const TOOLKEY = { petbath: 'bath', petbrush: 'hairbrush', pettowel: 'towel' };
+const sparkly = k => k === 'hairbrush' || k === 'petbrush' || k === 'pettowel';
+const ACT_TALK = { petbath: ['Muddy paws! Scrub scrub!', 'All clean! Good PET!'], petbrush: ['Brush out the fluffy tangles!', 'So soft and fluffy!'], pettowel: ['Brrr, all wet! Dry dry dry!', 'Warm and dry! Good PET!'], bath: ['Uh oh, muddy! Rub rub rub!', 'Squeaky clean!'], teeth: ['Brush away the sugar bugs!', 'Shiny sparkly teeth!'], hands: ['Scrub scrub! Wash the germs away!', 'Clean hands! Yay!'], hairbrush: ['Brush out the tangles!', 'Pretty smooth hair!'] };
 function startAct(kind) {
   endAct();
   act = { kind, spots: [], down: false, acc: 0, done: false, last: null };
   let spots;
-  if (kind === 'teeth' || kind === 'hands') {
-    const sc = kind === 'teeth' ? teethScene() : handsScene();
+  if (kind === 'teeth' || kind === 'hands' || kind.startsWith('pet')) {
+    const sc = kind === 'teeth' ? teethScene() : kind === 'hands' ? handsScene() : petScene(kind);
     scene.innerHTML = sc.svg; spots = sc.spots; show(doll, false); show(scene, true); act.svg = scene;
     act.layer = document.createElementNS(NS, 'g'); scene.appendChild(act.layer);
   } else {
@@ -879,7 +1028,7 @@ function startAct(kind) {
   act.layer.innerHTML = '';
   spots.forEach(s => { const g = document.createElementNS(NS, 'g'); g.innerHTML = s.html; act.layer.appendChild(g); act.spots.push({ x: s.x, y: s.y, r: s.r, el: g, life: 1 }); });
   act.fxG = document.createElementNS(NS, 'g'); act.svg.appendChild(act.fxG);
-  act.tool = document.createElementNS(NS, 'g'); act.tool.innerHTML = `<g class="wiggle">${TOOLS[kind]}</g>`; act.tool.style.pointerEvents = 'none';
+  act.tool = document.createElementNS(NS, 'g'); act.tool.innerHTML = `<g class="wiggle">${TOOLS[TOOLKEY[kind] || kind]}</g>`; act.tool.style.pointerEvents = 'none';
   act.svg.appendChild(act.tool);
   const s0 = act.spots[0]; moveTool({ x: s0.x, y: s0.y });
   sfx.tap(); say(ACT_TALK[kind][0], true); renderFabs(); renderPanel();
@@ -890,8 +1039,8 @@ function svgPt(e) {
   const m = act.svg.getScreenCTM(); return m ? p.matrixTransform(m.inverse()) : { x: 0, y: 0 };
 }
 function bubble(p) {
-  const c = document.createElementNS(NS, act.kind === 'hairbrush' ? 'path' : 'circle');
-  if (act.kind === 'hairbrush') { c.setAttribute('d', star(p.x + (R() - .5) * 40, p.y + (R() - .5) * 40, 8, 3, 4)); c.setAttribute('fill', '#fff'); }
+  const c = document.createElementNS(NS, sparkly(act.kind) ? 'path' : 'circle');
+  if (sparkly(act.kind)) { c.setAttribute('d', star(p.x + (R() - .5) * 40, p.y + (R() - .5) * 40, 8, 3, 4)); c.setAttribute('fill', '#fff'); }
   else { c.setAttribute('cx', f1(p.x + (R() - .5) * 50)); c.setAttribute('cy', f1(p.y + (R() - .5) * 40)); c.setAttribute('r', f1(6 + R() * 11)); c.setAttribute('fill', 'rgba(255,255,255,.75)'); c.setAttribute('stroke', '#9fd8ff'); c.setAttribute('stroke-width', '2'); }
   c.setAttribute('class', 'bub'); act.fxG.appendChild(c); setTimeout(() => c.remove(), 950);
 }
@@ -914,7 +1063,7 @@ function scrub(p, d) {
 function finishAct() {
   const a = act; a.done = true;
   const end = () => {
-    sfx.fanfare(); say(ACT_TALK[a.kind][1], true);
+    sfx.fanfare(); say(ACT_TALK[a.kind][1].replace('PET', st.pet.kind), true); if (a.kind.startsWith('pet')) setTimeout(sfx.pet, 1000);
     for (let i = 0; i < 5; i++) setTimeout(() => { if (act === a) sparkAt(a.svg, 90 + R() * 220, a.svg === scene ? 80 + R() * 240 : 100 + R() * 450, 9, 100); }, i * 140);
     setTimeout(() => { if (act === a) { endAct(); jump(); } }, 2200);
   };
@@ -935,7 +1084,7 @@ function endAct() {
   $('#dirt').innerHTML = ''; $('#frizz').innerHTML = '';
   show(scene, false); scene.innerHTML = ''; show(doll, true); doll.classList.remove('still');
   if (bathBg) { bathBg = false; renderBg(); }
-  renderFabs(); if (ui.tab === 'clean') renderPanel(); tabView();
+  renderFabs(); if (ui.tab === 'clean' || ui.tab === 'pet') renderPanel(); tabView();
 }
 
 /* ---------- input ---------- */
@@ -943,7 +1092,8 @@ stage.addEventListener('pointerdown', e => {
   ac();
   if (e.target.closest('.fab')) return;
   if (!act) {
-    if (e.target.closest('#doll')) { sfx.giggle(); jump(); if (R() < .35) say(pick(['Hee hee!', 'That tickles!', 'Hi friend!'])); }
+    if (e.target.closest('#L-pet')) { sfx.pet(); hopPet(); if (R() < .4) say(PET_TALK[st.pet.kind][0]); }
+    else if (e.target.closest('#doll')) { sfx.giggle(); jump(); if (R() < .35) say(pick(['Hee hee!', 'That tickles!', 'Hi friend!'])); }
     return;
   }
   if (act.done) return;
@@ -987,6 +1137,11 @@ $('#panel').addEventListener('click', e => {
     case 'sticker': st.mk.stickers.push({ t: v }); if (st.mk.stickers.length > 4) st.mk.stickers.shift(); applied('stickers'); break;
     case 'wipe': wipe(); break;
     case 'clean': startAct(v); return;
+    case 'petk': st.pet.kind = v; if (v === 'none') { sfx.tap(); renderDoll(); save(); break; } applied('pet'); setTimeout(() => { sfx.pet(); hopPet(); }, 300); break;
+    case 'fur': st.pet.fur = v; applied('pet'); break;
+    case 'petacc': st.pet.acc = v; applied('pet'); break;
+    case 'petaccc': st.pet.accC = v; applied('pet'); break;
+    case 'groom': if (v === 'treat') petTreat(); else { startAct(v); return; } break;
     case 'skin': st.skin = +v; applied('face'); break;
     case 'eyes': st.eyes = v; applied('face'); break;
     case 'freck': st.freckles = v === '1'; applied('face'); break;
@@ -1000,7 +1155,7 @@ $('#panel').addEventListener('click', e => {
 /* ---------- boot ---------- */
 load();
 renderBg(); renderDoll(); renderTabs(); renderPanel(false); renderFabs();
-window.__dolly = { get st() { return st; }, get act() { return act; }, startAct, scrub, endAct, surprise, ui, renderPanel, renderTabs, tabView };
+window.__dolly = { get st() { return st; }, get act() { return act; }, startAct, scrub, endAct, surprise, petTreat, ui, renderPanel, renderTabs, tabView };
 })();
 </script>
 </body>
