@@ -12,7 +12,7 @@ A dress-up and hygiene game for little kids (about 3 to 6). It's all pictures, s
 - **Pet:** a puppy, kitty or bunny to groom (bath, brush, towel dry) and feed treats, with fur colors and accessories.
 - **Photos:** backdrops and a photo album that saves up to 12 looks.
 
-It's one self-contained HTML file. It makes no network requests and collects no data, and it saves looks only in the browser on your device.
+It's one self-contained HTML file. The voice is a real child voice (Microsoft's `en-US-AnaNeural`, recorded with `tools/build_voice.py`) baked into the page, so it works offline. It makes no network requests and collects no data, and it saves looks only in the browser on your device.
 
 On an iPad, open the link in Safari, then tap Share → Add to Home Screen so it opens like an app.
 
